@@ -62,23 +62,36 @@ fun SimInfoScreen() {
         }
     }
 
+    fun getPhoneNumberFromSubscriptionManager(context: android.content.Context): String {
+        return try {
+            val sm = context.getSystemService(SubscriptionManager::class.java)
+            val infoList = sm?.activeSubscriptionInfoList
+            if (!infoList.isNullOrEmpty()) {
+                val firstNumber = infoList[0].number
+                if (!firstNumber.isNullOrBlank()) {
+                    firstNumber
+                } else {
+                    "Phone number not available"
+                }
+            } else {
+                "No active subscriptions found"
+            }
+        } catch (e: Exception) {
+            "Error: ${e.message}"
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = requiredPermissions.all { permissions[it] == true }
         permissionLog = checkPermissions()
         if (granted) {
-            val result = getSimAndPhoneInfoWithDebug(context, androidVersion)
-            phoneNumber = result.first
-            simInfo = result.second
-            extraInfo = result.third
-            errorLog = result.fourth
-            showManualEntry = phoneNumber == "Unavailable"
+            val number = getPhoneNumberFromSubscriptionManager(context)
+            phoneNumber = number
+            showManualEntry = number == "Phone number not available" || number == "No active subscriptions found" || number.startsWith("Error")
         } else {
             phoneNumber = "Permission denied"
-            simInfo = "Cannot access SIM info without permission."
-            extraInfo = emptyList()
-            errorLog = listOf("Permission denied for one or more required permissions.")
             showManualEntry = true
         }
     }
@@ -96,12 +109,9 @@ fun SimInfoScreen() {
             ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
         if (allGranted) {
-            val result = getSimAndPhoneInfoWithDebug(context, androidVersion)
-            phoneNumber = result.first
-            simInfo = result.second
-            extraInfo = result.third
-            errorLog = result.fourth
-            showManualEntry = phoneNumber == "Unavailable"
+            val number = getPhoneNumberFromSubscriptionManager(context)
+            phoneNumber = number
+            showManualEntry = number == "Phone number not available" || number == "No active subscriptions found" || number.startsWith("Error")
         } else if (!permissionRequested) {
             permissionRequested = true
             permissionLauncher.launch(requiredPermissions)
@@ -121,7 +131,7 @@ fun SimInfoScreen() {
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = "Phone Number:")
         Spacer(modifier = Modifier.height(8.dp))
-        if (phoneNumber == "Unavailable" && showManualEntry) {
+        if (showManualEntry) {
             OutlinedTextField(
                 value = manualPhoneNumber,
                 onValueChange = { manualPhoneNumber = it },
@@ -133,44 +143,12 @@ fun SimInfoScreen() {
                 Text(text = "(Manually entered)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             }
         } else {
-            Text(text = if (phoneNumber == "Unavailable") "Unavailable (May be restricted by OS or carrier)" else phoneNumber)
+            Text(text = phoneNumber)
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Other SIM Info:")
-        Spacer(modifier = Modifier.height(8.dp))
-        simInfo.split('\n').forEach { line ->
-            if (line.contains(": ")) {
-                val (label, value) = line.split(": ", limit = 2)
-                Text(text = "$label: ${if (value.isBlank()) "Unavailable (May be restricted by OS or carrier)" else value}", style = MaterialTheme.typography.bodySmall)
-            } else {
-                Text(text = line, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        if (extraInfo.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Extra Device/SIM Info:")
-            extraInfo.forEach { n ->
-                if (n.contains(": ")) {
-                    val (label, value) = n.split(": ", limit = 2)
-                    Text(text = "$label: ${if (value.isBlank() || value.contains("Error") || value.contains("Restricted")) "Unavailable (May be restricted by OS or app permissions)" else value}", style = MaterialTheme.typography.bodySmall)
-                } else {
-                    Text(text = n, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        if (permissionLog.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Permissions:", style = MaterialTheme.typography.labelSmall)
-            permissionLog.forEach { log ->
-                Text(text = log, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        if (errorLog.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Debug/Error Log:", style = MaterialTheme.typography.labelSmall)
-            errorLog.forEach { err ->
-                Text(text = err, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            }
+        Text(text = "Permissions:", style = MaterialTheme.typography.labelSmall)
+        permissionLog.forEach { log ->
+            Text(text = log, style = MaterialTheme.typography.bodySmall)
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
