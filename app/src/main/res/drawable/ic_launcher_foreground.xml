@@ -15,9 +15,8 @@
     <path
         android:fillColor="#FFFFFFFF"
         android:pathData="M74,58 l6,0 l0,4 l-6,0 z"/>
-    <!-- Phone handset right rectangle (as path, rotated) -->
+    <!-- Phone handset right rectangle (as path, manually rotated -30deg around 62,70) -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M59,68 l6,0 l0,4 l-6,0 z"
-        android:transform="rotate(-30,62,70)"/>
+        android:pathData="M62,66 l5.2,-2.5 l1.7,3.6 l-5.2,2.5 z"/>
 </vector>
