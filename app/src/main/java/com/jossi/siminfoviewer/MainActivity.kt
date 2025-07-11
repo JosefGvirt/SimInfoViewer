@@ -39,17 +39,16 @@ fun SimInfoScreen() {
     var phoneNumber by remember { mutableStateOf("Requesting permission...") }
     var simInfo by remember { mutableStateOf("") }
     var allNumbers by remember { mutableStateOf(listOf<String>()) }
+    var extraInfo by remember { mutableStateOf(listOf<String>()) }
     var permissionRequested by remember { mutableStateOf(false) }
 
+    // Request all possible permissions for maximum compatibility
     val requiredPermissions = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(
-                Manifest.permission.READ_PHONE_STATE,
-                Manifest.permission.READ_PHONE_NUMBERS
-            )
-        } else {
-            arrayOf(Manifest.permission.READ_PHONE_STATE)
-        }
+        arrayOf(
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_PHONE_NUMBERS,
+            Manifest.permission.READ_SMS
+        )
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -61,10 +60,12 @@ fun SimInfoScreen() {
             phoneNumber = number
             simInfo = info
             allNumbers = getAllPossiblePhoneNumbers(context)
+            extraInfo = getAllExtraSimDeviceInfo(context)
         } else {
             phoneNumber = "Permission denied"
             simInfo = "Cannot access SIM info without permission."
             allNumbers = emptyList()
+            extraInfo = emptyList()
         }
     }
 
@@ -77,6 +78,7 @@ fun SimInfoScreen() {
             phoneNumber = number
             simInfo = info
             allNumbers = getAllPossiblePhoneNumbers(context)
+            extraInfo = getAllExtraSimDeviceInfo(context)
         } else if (!permissionRequested) {
             permissionRequested = true
             permissionLauncher.launch(requiredPermissions)
@@ -102,9 +104,16 @@ fun SimInfoScreen() {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = simInfo)
         }
+        if (extraInfo.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = "Extra Device/SIM Info:")
+            extraInfo.forEach { n ->
+                Text(text = n, style = MaterialTheme.typography.bodySmall)
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Note: Many carriers and devices do not provide the phone number to apps for privacy reasons. If your number is not shown, this is likely the cause.",
+            text = "Note: Many carriers and devices do not provide the phone number or some SIM/device info to apps for privacy reasons. If your number is not shown, this is likely the cause.",
             style = MaterialTheme.typography.bodySmall
         )
     }
@@ -158,4 +167,30 @@ fun getAllPossiblePhoneNumbers(context: android.content.Context): List<String> {
         }
     }
     return numbers
+}
+
+fun getAllExtraSimDeviceInfo(context: android.content.Context): List<String> {
+    val info = mutableListOf<String>()
+    val tm = context.getSystemService(TelephonyManager::class.java)
+    try {
+        info.add("SIM Serial: ${tm.simSerialNumber ?: "Unavailable"}")
+        info.add("SIM Operator: ${tm.simOperatorName ?: "Unavailable"}")
+        info.add("SIM Country: ${tm.simCountryIso ?: "Unavailable"}")
+        info.add("SIM State: ${tm.simState}")
+        info.add("Device ID (IMEI): ${try { tm.deviceId ?: "Unavailable" } catch (e: Exception) { "Restricted" }}")
+        info.add("Subscriber ID (IMSI): ${try { tm.subscriberId ?: "Unavailable" } catch (e: Exception) { "Restricted" }}")
+    } catch (e: Exception) {
+        info.add("Error: ${e.message}")
+    }
+    // Android ID
+    try {
+        val androidId = android.provider.Settings.Secure.getString(context.contentResolver, android.provider.Settings.Secure.ANDROID_ID)
+        info.add("Android ID: $androidId")
+    } catch (e: Exception) {
+        info.add("Android ID: Error: ${e.message}")
+    }
+    // Device model
+    info.add("Device Model: ${android.os.Build.MODEL}")
+    info.add("Device Manufacturer: ${android.os.Build.MANUFACTURER}")
+    return info
 }
