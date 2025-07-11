@@ -39,14 +39,12 @@ fun SimInfoScreen() {
     val androidVersion = Build.VERSION.SDK_INT
     val androidVersionName = Build.VERSION.RELEASE
     var phoneNumber by remember { mutableStateOf("Requesting permission...") }
-    var manualPhoneNumber by remember { mutableStateOf("") }
     var simInfo by remember { mutableStateOf("") }
     var extraInfo by remember { mutableStateOf(listOf<String>()) }
     var permissionRequested by remember { mutableStateOf(false) }
     var errorLog by remember { mutableStateOf(listOf<String>()) }
     var permissionLog by remember { mutableStateOf(listOf<String>()) }
     var versionMessage by remember { mutableStateOf("") }
-    var showManualEntry by remember { mutableStateOf(false) }
 
     val requiredPermissions = remember {
         arrayOf(
@@ -89,10 +87,8 @@ fun SimInfoScreen() {
         if (granted) {
             val number = getPhoneNumberFromSubscriptionManager(context)
             phoneNumber = number
-            showManualEntry = number == "Phone number not available" || number == "No active subscriptions found" || number.startsWith("Error")
         } else {
             phoneNumber = "Permission denied"
-            showManualEntry = true
         }
     }
 
@@ -111,12 +107,9 @@ fun SimInfoScreen() {
         if (allGranted) {
             val number = getPhoneNumberFromSubscriptionManager(context)
             phoneNumber = number
-            showManualEntry = number == "Phone number not available" || number == "No active subscriptions found" || number.startsWith("Error")
         } else if (!permissionRequested) {
             permissionRequested = true
             permissionLauncher.launch(requiredPermissions)
-        } else {
-            showManualEntry = true
         }
     }
 
@@ -131,20 +124,7 @@ fun SimInfoScreen() {
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = "Phone Number:")
         Spacer(modifier = Modifier.height(8.dp))
-        if (showManualEntry) {
-            OutlinedTextField(
-                value = manualPhoneNumber,
-                onValueChange = { manualPhoneNumber = it },
-                label = { Text("Enter your phone number") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-            if (manualPhoneNumber.isNotBlank()) {
-                Text(text = "(Manually entered)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-            }
-        } else {
-            Text(text = phoneNumber)
-        }
+        Text(text = phoneNumber)
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = "Permissions:", style = MaterialTheme.typography.labelSmall)
         permissionLog.forEach { log ->
