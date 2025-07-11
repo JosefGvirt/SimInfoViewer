@@ -217,7 +217,7 @@ fun SimInfoScreen() {
     }
 }
 
-class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 fun getSimAndPhoneInfoWithDebug(context: android.content.Context, androidVersion: Int): Quadruple<String, String, List<String>, List<String>> {
     val tm = context.getSystemService(TelephonyManager::class.java)
