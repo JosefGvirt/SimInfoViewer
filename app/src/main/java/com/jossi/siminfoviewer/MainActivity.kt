@@ -38,9 +38,9 @@ fun SimInfoScreen() {
     val context = LocalContext.current
     var phoneNumber by remember { mutableStateOf("Requesting permission...") }
     var simInfo by remember { mutableStateOf("") }
+    var allNumbers by remember { mutableStateOf(listOf<String>()) }
     var permissionRequested by remember { mutableStateOf(false) }
 
-    // Determine required permissions based on Android version
     val requiredPermissions = remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
@@ -60,9 +60,11 @@ fun SimInfoScreen() {
             val (number, info) = getPhoneNumberAndSimInfo(context)
             phoneNumber = number
             simInfo = info
+            allNumbers = getAllPossiblePhoneNumbers(context)
         } else {
             phoneNumber = "Permission denied"
             simInfo = "Cannot access SIM info without permission."
+            allNumbers = emptyList()
         }
     }
 
@@ -74,6 +76,7 @@ fun SimInfoScreen() {
             val (number, info) = getPhoneNumberAndSimInfo(context)
             phoneNumber = number
             simInfo = info
+            allNumbers = getAllPossiblePhoneNumbers(context)
         } else if (!permissionRequested) {
             permissionRequested = true
             permissionLauncher.launch(requiredPermissions)
@@ -86,6 +89,13 @@ fun SimInfoScreen() {
         Text(text = "Phone Number:")
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = phoneNumber)
+        if (allNumbers.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = "All Possible Phone Numbers:")
+            allNumbers.forEach { n ->
+                Text(text = n, style = MaterialTheme.typography.bodySmall)
+            }
+        }
         if (simInfo.isNotBlank()) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(text = "Other SIM Info:")
@@ -133,4 +143,19 @@ fun getPhoneNumberAndSimInfo(context: android.content.Context): Pair<String, Str
         simInfo.append("Error: ${e.message}")
     }
     return Pair(number ?: "Unavailable", simInfo.toString().trim())
+}
+
+fun getAllPossiblePhoneNumbers(context: android.content.Context): List<String> {
+    val numbers = mutableListOf<String>()
+    val tm = context.getSystemService(TelephonyManager::class.java)
+    val sm = context.getSystemService(SubscriptionManager::class.java)
+    // Try TelephonyManager.line1Number
+    tm.line1Number?.let { if (it.isNotBlank()) numbers.add("TelephonyManager: $it") }
+    // Try SubscriptionManager/SubscriptionInfo
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+        sm.activeSubscriptionInfoList?.forEach { sub ->
+            sub.number?.let { if (it.isNotBlank()) numbers.add("SubscriptionInfo: $it") }
+        }
+    }
+    return numbers
 }
