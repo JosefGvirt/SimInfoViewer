@@ -68,13 +68,13 @@ fun SimInfoScreen() {
         val granted = requiredPermissions.all { permissions[it] == true }
         permissionLog = checkPermissions()
         if (granted) {
-            val (number, info, errors, debug) = getPhoneNumberAndSimInfoWithErrorsAndDebug(context, androidVersion)
-            phoneNumber = number
-            simInfo = info
+            val result = getPhoneNumberAndSimInfoWithErrorsAndDebug(context, androidVersion)
+            phoneNumber = result.first
+            simInfo = result.second
             allNumbers = getAllPossiblePhoneNumbers(context)
             extraInfo = getAllExtraSimDeviceInfo(context)
-            errorLog = errors
-            permissionLog = permissionLog + debug
+            errorLog = result.third
+            permissionLog = permissionLog + result.fourth
         } else {
             phoneNumber = "Permission denied"
             simInfo = "Cannot access SIM info without permission."
@@ -97,13 +97,13 @@ fun SimInfoScreen() {
             ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
         if (allGranted) {
-            val (number, info, errors, debug) = getPhoneNumberAndSimInfoWithErrorsAndDebug(context, androidVersion)
-            phoneNumber = number
-            simInfo = info
+            val result = getPhoneNumberAndSimInfoWithErrorsAndDebug(context, androidVersion)
+            phoneNumber = result.first
+            simInfo = result.second
             allNumbers = getAllPossiblePhoneNumbers(context)
             extraInfo = getAllExtraSimDeviceInfo(context)
-            errorLog = errors
-            permissionLog = permissionLog + debug
+            errorLog = result.third
+            permissionLog = permissionLog + result.fourth
         } else if (!permissionRequested) {
             permissionRequested = true
             permissionLauncher.launch(requiredPermissions)
