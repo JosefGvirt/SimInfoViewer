@@ -38,8 +38,12 @@ fun SimInfoScreen() {
     val context = LocalContext.current
     val androidVersion = Build.VERSION.SDK_INT
     val androidVersionName = Build.VERSION.RELEASE
-    var phoneNumber by remember { mutableStateOf("Requesting permission...") }
-    var simInfo by remember { mutableStateOf("") }
+    var phoneNumbers by remember { mutableStateOf(listOf<String>()) }
+    var carrierNames by remember { mutableStateOf(listOf<String>()) }
+    var simSlots by remember { mutableStateOf(listOf<Int>()) }
+    var countryCodes by remember { mutableStateOf(listOf<String>()) }
+    var manualPhoneNumber by remember { mutableStateOf("") }
+    var showManualEntry by remember { mutableStateOf(false) }
     var extraInfo by remember { mutableStateOf(listOf<String>()) }
     var permissionRequested by remember { mutableStateOf(false) }
     var errorLog by remember { mutableStateOf(listOf<String>()) }
@@ -60,23 +64,49 @@ fun SimInfoScreen() {
         }
     }
 
-    fun getPhoneNumberFromSubscriptionManager(context: android.content.Context): String {
-        return try {
+    fun getAllSimInfo(context: android.content.Context): Quadruple<List<String>, List<String>, List<Int>, List<String>> {
+        val numbers = mutableListOf<String>()
+        val carriers = mutableListOf<String>()
+        val slots = mutableListOf<Int>()
+        val countries = mutableListOf<String>()
+        try {
             val sm = context.getSystemService(SubscriptionManager::class.java)
             val infoList = sm?.activeSubscriptionInfoList
             if (!infoList.isNullOrEmpty()) {
-                val firstNumber = infoList[0].number
-                if (!firstNumber.isNullOrBlank()) {
-                    firstNumber
-                } else {
-                    "Phone number not available"
+                for (sub in infoList) {
+                    try {
+                        val number = sub.number ?: ""
+                        val carrier = sub.carrierName?.toString() ?: ""
+                        val slot = sub.simSlotIndex
+                        val country = sub.countryIso ?: ""
+                        if (number.isNotBlank()) numbers.add(number)
+                        carriers.add(carrier)
+                        slots.add(slot)
+                        countries.add(country)
+                    } catch (e: Exception) {
+                        errorLog = errorLog + "SubscriptionInfo error: ${e.message}"
+                    }
                 }
-            } else {
-                "No active subscriptions found"
             }
         } catch (e: Exception) {
-            "Error: ${e.message}"
+            errorLog = errorLog + "SubscriptionManager error: ${e.message}"
         }
+        return Quadruple(numbers, carriers, slots, countries)
+    }
+
+    fun getExtraSimDeviceInfo(context: android.content.Context): List<String> {
+        val info = mutableListOf<String>()
+        val tm = context.getSystemService(TelephonyManager::class.java)
+        try {
+            info.add("Android ID: ${try { android.provider.Settings.Secure.getString(context.contentResolver, android.provider.Settings.Secure.ANDROID_ID) } catch (e: Exception) { "Error: ${e.message}" }}")
+            info.add("Device Model: ${android.os.Build.MODEL}")
+            info.add("Device Manufacturer: ${android.os.Build.MANUFACTURER}")
+            info.add("SIM Serial: ${try { tm.simSerialNumber ?: "Unavailable" } catch (e: Exception) { "Error: ${e.message}" }}")
+            info.add("Subscriber ID (IMSI): ${try { tm.subscriberId ?: "Unavailable" } catch (e: Exception) { "Error: ${e.message}" }}")
+        } catch (e: Exception) {
+            info.add("Extra info error: ${e.message}")
+        }
+        return info
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -85,17 +115,27 @@ fun SimInfoScreen() {
         val granted = requiredPermissions.all { permissions[it] == true }
         permissionLog = checkPermissions()
         if (granted) {
-            val number = getPhoneNumberFromSubscriptionManager(context)
-            phoneNumber = number
+            val (numbers, carriers, slots, countries) = getAllSimInfo(context)
+            phoneNumbers = numbers
+            carrierNames = carriers
+            simSlots = slots
+            countryCodes = countries
+            extraInfo = getExtraSimDeviceInfo(context)
+            showManualEntry = phoneNumbers.isEmpty()
         } else {
-            phoneNumber = "Permission denied"
+            phoneNumbers = emptyList()
+            carrierNames = emptyList()
+            simSlots = emptyList()
+            countryCodes = emptyList()
+            extraInfo = getExtraSimDeviceInfo(context)
+            showManualEntry = true
         }
     }
 
     LaunchedEffect(Unit) {
         permissionLog = checkPermissions()
         if (androidVersion in 29..34) {
-            versionMessage = "On Android 10–14, access to phone numbers, SIM serial, and device IDs is restricted by the OS for privacy reasons. Even with all permissions, these fields are usually unavailable."
+            versionMessage = "Due to OS privacy restrictions, phone number and SIM serial access may be blocked even with permissions."
         } else if (androidVersion >= 35) {
             versionMessage = "On Android 15+, access to phone numbers and SIM info may still be limited by your carrier or device, even with all permissions."
         } else {
@@ -105,11 +145,18 @@ fun SimInfoScreen() {
             ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
         if (allGranted) {
-            val number = getPhoneNumberFromSubscriptionManager(context)
-            phoneNumber = number
+            val (numbers, carriers, slots, countries) = getAllSimInfo(context)
+            phoneNumbers = numbers
+            carrierNames = carriers
+            simSlots = slots
+            countryCodes = countries
+            extraInfo = getExtraSimDeviceInfo(context)
+            showManualEntry = phoneNumbers.isEmpty()
         } else if (!permissionRequested) {
             permissionRequested = true
             permissionLauncher.launch(requiredPermissions)
+        } else {
+            showManualEntry = true
         }
     }
 
@@ -122,13 +169,45 @@ fun SimInfoScreen() {
             Text(text = versionMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Phone Number:")
+        Text(text = "Phone Number(s):")
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = phoneNumber)
+        if (phoneNumbers.isNotEmpty()) {
+            phoneNumbers.forEachIndexed { idx, number ->
+                Text(text = "SIM Slot ${simSlots.getOrNull(idx) ?: "?"}: ${number}", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "Carrier: ${carrierNames.getOrNull(idx) ?: "Unknown"}", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Country: ${countryCodes.getOrNull(idx) ?: "Unknown"}", style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        } else if (showManualEntry) {
+            OutlinedTextField(
+                value = manualPhoneNumber,
+                onValueChange = { manualPhoneNumber = it },
+                label = { Text("Enter your phone number") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (manualPhoneNumber.isNotBlank()) {
+                Text(text = "(Manually entered)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            }
+        } else {
+            Text(text = "No phone number available.", style = MaterialTheme.typography.bodySmall)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "Extra Device/SIM Info:", style = MaterialTheme.typography.labelSmall)
+        extraInfo.forEach { n ->
+            Text(text = n, style = MaterialTheme.typography.bodySmall)
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = "Permissions:", style = MaterialTheme.typography.labelSmall)
         permissionLog.forEach { log ->
             Text(text = log, style = MaterialTheme.typography.bodySmall)
+        }
+        if (errorLog.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = "Debug/Error Log:", style = MaterialTheme.typography.labelSmall)
+            errorLog.forEach { err ->
+                Text(text = err, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -137,6 +216,8 @@ fun SimInfoScreen() {
         )
     }
 }
+
+class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 fun getSimAndPhoneInfoWithDebug(context: android.content.Context, androidVersion: Int): Quadruple<String, String, List<String>, List<String>> {
     val tm = context.getSystemService(TelephonyManager::class.java)
@@ -209,8 +290,6 @@ fun getSimAndPhoneInfoWithDebug(context: android.content.Context, androidVersion
     }
     return Quadruple(number ?: "Unavailable", simInfo.toString().trim(), extraInfo, debug)
 }
-
-class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 fun getAllPossiblePhoneNumbers(context: android.content.Context): List<String> {
     val numbers = mutableListOf<String>()
