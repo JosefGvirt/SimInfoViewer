@@ -7,8 +7,26 @@
     <path
         android:fillColor="#FFFFFFFF"
         android:pathData="M24,16 L84,16 L84,92 L24,92 L24,32 L40,16 Z"/>
-    <!-- Number '1' in the center -->
+    <!-- Phone handset overlay (simple arc and rectangles for stylized look) -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M54,38 L54,78 L50,78 L50,42 L46,42 L46,38 Z"/>
+        android:pathData="M60,60 C65,70 80,70 80,60 C80,50 65,50 60,60 Z"/>
+    <rect
+        android:fillColor="#FFFFFFFF"
+        android:x="75"
+        android:y="58"
+        android:width="6"
+        android:height="4"
+        android:rotation="30"
+        android:pivotX="78"
+        android:pivotY="60"/>
+    <rect
+        android:fillColor="#FFFFFFFF"
+        android:x="59"
+        android:y="68"
+        android:width="6"
+        android:height="4"
+        android:rotation="-30"
+        android:pivotX="62"
+        android:pivotY="70"/>
 </vector>
