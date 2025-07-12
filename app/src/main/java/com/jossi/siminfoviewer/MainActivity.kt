@@ -275,9 +275,24 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
             if (googlePhoneNumber.isNotEmpty()) {
                 Text(text = "Google: $googlePhoneNumber", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
             } else {
+                // Restore Google account picker button
+                Button(
+                    onClick = { 
+                        onRequestGooglePhoneNumber { number ->
+                            googlePhoneNumber = number
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Get Phone Number from Google")
+                }
                 // Prompt and avatar call buttons for Martha, Lamis, Anna
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Try calling one of the avatars to retrieve number", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = "Try calling one of the avatars to retrieve number",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF1976D2) // Blue
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     AvatarCallButton(name = "Martha", number = "+972546763889", context = context)
@@ -397,6 +412,7 @@ data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val 
 
 @Composable
 fun AvatarCallButton(name: String, number: String, context: android.content.Context) {
+    if (name.isBlank()) return // Do not render button if name is empty
     Button(
         onClick = {
             val intent = Intent(Intent.ACTION_DIAL)
