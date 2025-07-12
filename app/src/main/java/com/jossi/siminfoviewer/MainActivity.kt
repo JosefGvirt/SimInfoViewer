@@ -275,18 +275,10 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
             if (googlePhoneNumber.isNotEmpty()) {
                 Text(text = "Google: $googlePhoneNumber", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
             } else {
-                Button(
-                    onClick = { 
-                        onRequestGooglePhoneNumber { number ->
-                            googlePhoneNumber = number
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Get Phone Number from Google")
-                }
-                // Extra buttons for Martha, Lamis, Anna
+                // Prompt and avatar call buttons for Martha, Lamis, Anna
                 Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "Try calling one of the avatars to retrieve number", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     AvatarCallButton(name = "Martha", number = "+972546763889", context = context)
                     AvatarCallButton(name = "Lamis", number = "+972546763889", context = context)
