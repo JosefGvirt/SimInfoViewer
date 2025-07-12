@@ -241,11 +241,13 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
 
     // Replace Column with a scrollable Box and Column
     Box(modifier = Modifier.fillMaxSize()) {
+        // Main scrollable content
         Column(
             modifier = Modifier
                 .padding(24.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 200.dp), // Add bottom padding for bottom section
             verticalArrangement = Arrangement.Top
         ) {
             Text(text = "SIM Info Viewer", style = MaterialTheme.typography.headlineSmall)
@@ -374,15 +376,15 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
                 Text(text = "Location permission needed to check WiFi", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
         }
-        // Avatar suggestion and buttons at the bottom
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 64.dp) // leave space for animated footer
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (phoneNumbers.isEmpty() && googlePhoneNumber.isEmpty()) {
+        // Bottom action section: only if phone number is not found
+        if (phoneNumbers.isEmpty() && googlePhoneNumber.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 64.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Button(
                     onClick = { 
                         onRequestGooglePhoneNumber { number ->
@@ -400,7 +402,6 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
                     color = Color(0xFF1976D2) // Blue
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                // Stack avatar call buttons vertically
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -412,13 +413,14 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
                     AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
                 }
             }
-            AnimatedFooter()
         }
+        // Animated footer always at the very bottom
+        AnimatedFooter(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
 @Composable
-fun AnimatedFooter() {
+fun AnimatedFooter(modifier: Modifier = Modifier) {
     // Animate RGB color
     val infiniteTransition = rememberInfiniteTransition(label = "footerColor")
     val red by infiniteTransition.animateFloat(
@@ -446,7 +448,7 @@ fun AnimatedFooter() {
         ), label = "blue"
     )
     val animatedColor = Color(red.toInt(), green.toInt(), blue.toInt())
-    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
             text = "created by Yossi The Peeeeps 😎",
             color = animatedColor,
