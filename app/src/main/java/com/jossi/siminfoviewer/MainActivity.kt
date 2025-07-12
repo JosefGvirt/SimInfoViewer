@@ -426,7 +426,7 @@ fun AvatarCallButton(name: String, number: String, context: android.content.Cont
 }
 
 @Composable
-fun AnimatedFooter() {
+fun AnimatedFooter(modifier: Modifier = Modifier) {
     // Animate RGB color
     val infiniteTransition = rememberInfiniteTransition(label = "footerColor")
     val red by infiniteTransition.animateFloat(
@@ -454,7 +454,7 @@ fun AnimatedFooter() {
         ), label = "blue"
     )
     val animatedColor = Color(red.toInt(), green.toInt(), blue.toInt())
-    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
             text = "created by Yossi The Peeeeps 😎",
             color = animatedColor,
