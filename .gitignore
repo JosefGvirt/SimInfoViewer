@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Sensitive files for Google Drive upload
+credentials.json
+service_account.json
+token.json
