@@ -38,6 +38,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.scale
 
 class MainActivity : ComponentActivity() {
     private var phoneNumberCallback: ((String) -> Unit)? = null
@@ -381,11 +383,20 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
 @Composable
 fun AvatarCallerPage(onBack: () -> Unit) {
     val context = LocalContext.current
-    Box(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFEEEEEE)) // Light grey background
+    ) {
+        val maxHeight = maxHeight
+        val maxWidth = maxWidth
+        // Calculate scale factor to fit all content
+        val baseHeight = 500.dp // estimated base height for all content
+        val scale = (maxHeight / baseHeight).coerceAtMost(1f)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .scale(scale)
                 .padding(24.dp, 24.dp, 24.dp, 72.dp), // leave space for footer
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
