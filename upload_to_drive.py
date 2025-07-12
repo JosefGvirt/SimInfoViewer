@@ -44,6 +44,14 @@ def get_version_info():
         print(f"Error reading version info: {e}")
         return "1", "1.0"
 
+def get_latest_commit_message():
+    try:
+        import subprocess
+        result = subprocess.run(["git", "log", "-1", "--pretty=%B"], capture_output=True, text=True)
+        return result.stdout.strip()
+    except Exception as e:
+        return "No description available."
+
 def get_drive_service():
     """Get authenticated Google Drive service using OAuth"""
     creds = None
@@ -109,10 +117,13 @@ def upload_to_drive():
         if service is None:
             return False
         
+        # Get latest commit message for description
+        description = get_latest_commit_message()
         # Upload file
         file_metadata = {
             "name": filename,
-            "parents": [DRIVE_FOLDER_ID]
+            "parents": [DRIVE_FOLDER_ID],
+            "description": description
         }
         
         media = MediaFileUpload(APK_PATH, mimetype="application/vnd.android.package-archive")
