@@ -30,6 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ArrowBack
 
 class MainActivity : ComponentActivity() {
     private var phoneNumberCallback: ((String) -> Unit)? = null
@@ -106,6 +111,7 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
     var showGoogleFallback by remember { mutableStateOf(false) }
     var googlePhoneNumber by remember { mutableStateOf("") }
     var simMethodFailed by remember { mutableStateOf(false) }
+    var showAvatarPage by remember { mutableStateOf(false) }
 
     val requiredPermissions = remember {
         arrayOf(
@@ -283,6 +289,17 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
                 ) {
                     Text("Get Phone Number from Google")
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Call Avatars button
+                Button(
+                    onClick = { showAvatarPage = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF90CAF9))
+                ) {
+                    Icon(imageVector = Icons.Default.Person, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Call Avatars")
+                }
             }
         }
         
@@ -350,6 +367,35 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
 
         Spacer(modifier = Modifier.weight(1f, fill = true))
         AnimatedFooter()
+    }
+
+    if (showAvatarPage) {
+        AvatarCallerPage(onBack = { showAvatarPage = false }, context = context)
+        return
+    }
+}
+
+@Composable
+fun AvatarCallerPage(onBack: () -> Unit, context: android.content.Context) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Call an Avatar", style = MaterialTheme.typography.headlineSmall)
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+        AvatarCallButton(name = "Martha", number = "+972546763889", context = context)
+        Spacer(modifier = Modifier.height(16.dp))
+        AvatarCallButton(name = "Lamis", number = "+972546763889", context = context)
+        Spacer(modifier = Modifier.height(16.dp))
+        AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
     }
 }
 
