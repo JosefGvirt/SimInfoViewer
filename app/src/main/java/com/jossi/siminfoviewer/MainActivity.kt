@@ -1,8 +1,11 @@
 package com.jossi.siminfoviewer
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.wifi.WifiManager
 import android.os.Bundle
+import android.provider.Settings
 import android.telephony.TelephonyManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,11 +48,18 @@ fun SimInfoScreen() {
     var deviceModel by remember { mutableStateOf("") }
     var deviceManufacturer by remember { mutableStateOf("") }
     var permissionRequested by remember { mutableStateOf(false) }
+    
+    // WiFi related state
+    var currentWifiSSID by remember { mutableStateOf("") }
+    var isConnectedToADU by remember { mutableStateOf(false) }
+    var wifiPermissionGranted by remember { mutableStateOf(false) }
 
     val requiredPermissions = remember {
         arrayOf(
             Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_PHONE_NUMBERS
+            Manifest.permission.READ_PHONE_NUMBERS,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.ACCESS_FINE_LOCATION
         )
     }
 
@@ -83,21 +93,51 @@ fun SimInfoScreen() {
         return Quadruple(numbers, carriers, slots, countries)
     }
 
+    fun checkWifiConnection(context: android.content.Context) {
+        try {
+            val wifiManager = context.getSystemService(WifiManager::class.java)
+            val wifiInfo = wifiManager.connectionInfo
+            val ssid = wifiInfo.ssid
+            
+            if (ssid != null && ssid.isNotBlank()) {
+                // Remove quotes from SSID
+                currentWifiSSID = ssid.removeSurrounding("\"")
+                isConnectedToADU = currentWifiSSID.equals("ADU", ignoreCase = true)
+            } else {
+                currentWifiSSID = "Not connected"
+                isConnectedToADU = false
+            }
+        } catch (e: Exception) {
+            currentWifiSSID = "Error: ${e.message}"
+            isConnectedToADU = false
+        }
+    }
+
+    fun openWifiSettings() {
+        val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
+        context.startActivity(intent)
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = requiredPermissions.all { permissions[it] == true }
+        wifiPermissionGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
         if (granted) {
             val (numbers, carriers, slots, countries) = getAllSimInfo(context)
             phoneNumbers = numbers
             carrierNames = carriers
             simSlots = slots
             countryCodes = countries
+            checkWifiConnection(context)
         } else {
             phoneNumbers = emptyList()
             carrierNames = emptyList()
             simSlots = emptyList()
             countryCodes = emptyList()
+            if (wifiPermissionGranted) {
+                checkWifiConnection(context)
+            }
         }
     }
 
@@ -108,15 +148,20 @@ fun SimInfoScreen() {
         val allGranted = requiredPermissions.all {
             ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
+        wifiPermissionGranted = ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        
         if (allGranted) {
             val (numbers, carriers, slots, countries) = getAllSimInfo(context)
             phoneNumbers = numbers
             carrierNames = carriers
             simSlots = slots
             countryCodes = countries
+            checkWifiConnection(context)
         } else if (!permissionRequested) {
             permissionRequested = true
             permissionLauncher.launch(requiredPermissions)
+        } else if (wifiPermissionGranted) {
+            checkWifiConnection(context)
         }
     }
 
@@ -144,6 +189,31 @@ fun SimInfoScreen() {
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = "Model: $deviceModel", style = MaterialTheme.typography.bodySmall)
         Text(text = "Manufacturer: $deviceManufacturer", style = MaterialTheme.typography.bodySmall)
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "WiFi Network:", style = MaterialTheme.typography.labelMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Current: $currentWifiSSID", style = MaterialTheme.typography.bodySmall)
+        
+        if (isConnectedToADU) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "⚠️ Connected to ADU network", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { openWifiSettings() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Open WiFi Settings to Forget ADU")
+            }
+        } else if (currentWifiSSID != "Not connected" && currentWifiSSID != "Error: " && currentWifiSSID.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "✅ Not connected to ADU", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        }
+        
+        if (!wifiPermissionGranted) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Location permission needed to check WiFi", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
     }
 }
 
