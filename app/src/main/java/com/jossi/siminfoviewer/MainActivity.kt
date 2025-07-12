@@ -25,11 +25,9 @@ import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.HintRequest
-import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.auth.api.Auth
+import com.google.android.gms.auth.api.credentials.Credentials
 
 class MainActivity : ComponentActivity() {
-    private var googleApiClient: GoogleApiClient? = null
     private var phoneNumberCallback: ((String) -> Unit)? = null
     
     companion object {
@@ -38,11 +36,6 @@ class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Initialize Google API Client
-        googleApiClient = GoogleApiClient.Builder(this)
-            .addApi(Auth.CREDENTIALS_API)
-            .build()
         
         setContent {
             SimInfoViewerTheme {
@@ -57,24 +50,14 @@ class MainActivity : ComponentActivity() {
         }
     }
     
-    override fun onStart() {
-        super.onStart()
-        googleApiClient?.connect()
-    }
-    
-    override fun onStop() {
-        super.onStop()
-        googleApiClient?.disconnect()
-    }
-    
     private fun requestPhoneNumberFromGoogle(callback: (String) -> Unit) {
         phoneNumberCallback = callback
         val hintRequest = HintRequest.Builder()
             .setPhoneNumberIdentifierSupported(true)
             .build()
         
-        val intent = Auth.CredentialsApi.getHintPickerIntent(googleApiClient, hintRequest)
         try {
+            val intent = Credentials.getClient(this).getHintPickerIntent(hintRequest)
             startIntentSenderForResult(intent.intentSender, PHONE_NUMBER_RC, null, 0, 0, 0)
         } catch (e: IntentSender.SendIntentException) {
             callback("Error: Could not start Google phone picker")
@@ -98,7 +81,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun SimInfoScreen(onRequestGooglePhoneNumber: (String) -> Unit) {
+fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
     val context = LocalContext.current
     val androidVersion = Build.VERSION.SDK_INT
     val androidVersionName = Build.VERSION.RELEASE
@@ -149,12 +132,12 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: (String) -> Unit) {
                         slots.add(slot)
                         countries.add(country)
                     } catch (e: Exception) {
-                        // Silent error handling
+                        // Silent error handling for individual SIM
                     }
                 }
             }
         } catch (e: Exception) {
-            // Silent error handling
+            // Silent error handling for SubscriptionManager
         }
         return Quadruple(numbers, carriers, slots, countries)
     }
