@@ -18,7 +18,7 @@ from google.auth.transport.requests import Request
 
 # Configuration
 DRIVE_FOLDER_ID = "1iAnksDL91fhW2RfHEoG5o9ID6I9BYCp9"
-APK_PATH = "app/build/outputs/apk/release/app-release-unsigned.apk"
+APK_PATH = "app/build/outputs/apk/release/app-release.apk"
 CREDENTIALS_FILE = "credentials.json"
 TOKEN_FILE = "token.json"
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
