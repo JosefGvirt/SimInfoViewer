@@ -303,7 +303,8 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = { openWifiSettings() },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)) // Orange
             ) {
                 Text("Open WiFi Settings to Forget ADU")
             }
@@ -328,7 +329,8 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
                     val intent = Intent(Settings.ACTION_DATA_ROAMING_SETTINGS)
                     context.startActivity(intent)
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)) // Orange
             ) {
                 Text("Open Cellular Settings to Disconnect Data")
             }
