@@ -310,6 +310,35 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "✅ Not connected to ADU", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
         }
+
+        // Cellular network alert logic
+        val nonPelephoneCarriers = carrierNames.filter { it.isNotBlank() && !it.equals("Pelephone", ignoreCase = true) }
+        if (nonPelephoneCarriers.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "⚠️ Connected to external cellular network: ${nonPelephoneCarriers.joinToString(", ")}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    // Open cellular data settings
+                    val intent = Intent(Settings.ACTION_DATA_ROAMING_SETTINGS)
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Open Cellular Settings to Disconnect Data")
+            }
+        } else if (carrierNames.any { it.equals("Pelephone", ignoreCase = true) }) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "✅ Not connected to external network",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
         
         if (!wifiPermissionGranted) {
             Spacer(modifier = Modifier.height(8.dp))
