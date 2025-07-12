@@ -26,6 +26,9 @@ import android.telephony.SubscriptionManager
 import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.HintRequest
 import com.google.android.gms.auth.api.credentials.Credentials
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.core.*
 
 class MainActivity : ComponentActivity() {
     private var phoneNumberCallback: ((String) -> Unit)? = null
@@ -304,6 +307,48 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Location permission needed to check WiFi", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
+
+        Spacer(modifier = Modifier.weight(1f, fill = true))
+        AnimatedFooter()
+    }
+}
+
+@Composable
+fun AnimatedFooter() {
+    // Animate RGB color
+    val infiniteTransition = rememberInfiniteTransition(label = "footerColor")
+    val red by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 255f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = "red"
+    )
+    val green by infiniteTransition.animateFloat(
+        initialValue = 255f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = "green"
+    )
+    val blue by infiniteTransition.animateFloat(
+        initialValue = 128f,
+        targetValue = 255f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = "blue"
+    )
+    val animatedColor = Color(red.toInt(), green.toInt(), blue.toInt())
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Text(
+            text = "created by Yossi The Peeeeps 😎",
+            color = animatedColor,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
+        )
     }
 }
 
