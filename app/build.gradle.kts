@@ -37,4 +37,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.3")
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.3")
     implementation("androidx.activity:activity-compose:1.8.0") // or latest
+    
+    // Google Play Services for phone number fallback
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 }

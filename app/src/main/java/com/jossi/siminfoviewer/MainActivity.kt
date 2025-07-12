@@ -2,6 +2,7 @@ package com.jossi.siminfoviewer
 
 import android.Manifest
 import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.os.Bundle
@@ -22,22 +23,82 @@ import com.jossi.siminfoviewer.ui.theme.SimInfoViewerTheme
 import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
+import com.google.android.gms.auth.api.credentials.Credential
+import com.google.android.gms.auth.api.credentials.HintRequest
+import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.auth.api.Auth
 
 class MainActivity : ComponentActivity() {
+    private var googleApiClient: GoogleApiClient? = null
+    private var phoneNumberCallback: ((String) -> Unit)? = null
+    
+    companion object {
+        private const val PHONE_NUMBER_RC = 1001
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize Google API Client
+        googleApiClient = GoogleApiClient.Builder(this)
+            .addApi(Auth.CREDENTIALS_API)
+            .build()
+        
         setContent {
             SimInfoViewerTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    SimInfoScreen()
+                    SimInfoScreen(
+                        onRequestGooglePhoneNumber = { callback ->
+                            requestPhoneNumberFromGoogle(callback)
+                        }
+                    )
                 }
             }
+        }
+    }
+    
+    override fun onStart() {
+        super.onStart()
+        googleApiClient?.connect()
+    }
+    
+    override fun onStop() {
+        super.onStop()
+        googleApiClient?.disconnect()
+    }
+    
+    private fun requestPhoneNumberFromGoogle(callback: (String) -> Unit) {
+        phoneNumberCallback = callback
+        val hintRequest = HintRequest.Builder()
+            .setPhoneNumberIdentifierSupported(true)
+            .build()
+        
+        val intent = Auth.CredentialsApi.getHintPickerIntent(googleApiClient, hintRequest)
+        try {
+            startIntentSenderForResult(intent.intentSender, PHONE_NUMBER_RC, null, 0, 0, 0)
+        } catch (e: IntentSender.SendIntentException) {
+            callback("Error: Could not start Google phone picker")
+        }
+    }
+    
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PHONE_NUMBER_RC) {
+            if (resultCode == RESULT_OK && data != null) {
+                val credential = data.getParcelableExtra<Credential>(Credential.EXTRA_KEY)
+                if (credential != null && phoneNumberCallback != null) {
+                    phoneNumberCallback?.invoke(credential.id ?: "No number selected")
+                }
+            } else {
+                phoneNumberCallback?.invoke("User cancelled Google phone picker")
+            }
+            phoneNumberCallback = null
         }
     }
 }
 
 @Composable
-fun SimInfoScreen() {
+fun SimInfoScreen(onRequestGooglePhoneNumber: (String) -> Unit) {
     val context = LocalContext.current
     val androidVersion = Build.VERSION.SDK_INT
     val androidVersionName = Build.VERSION.RELEASE
@@ -53,6 +114,11 @@ fun SimInfoScreen() {
     var currentWifiSSID by remember { mutableStateOf("") }
     var isConnectedToADU by remember { mutableStateOf(false) }
     var wifiPermissionGranted by remember { mutableStateOf(false) }
+    
+    // Google fallback state
+    var showGoogleFallback by remember { mutableStateOf(false) }
+    var googlePhoneNumber by remember { mutableStateOf("") }
+    var simMethodFailed by remember { mutableStateOf(false) }
 
     val requiredPermissions = remember {
         arrayOf(
@@ -129,12 +195,22 @@ fun SimInfoScreen() {
             carrierNames = carriers
             simSlots = slots
             countryCodes = countries
+            
+            // Check if SIM method failed and show Google fallback
+            if (numbers.isEmpty()) {
+                simMethodFailed = true
+                showGoogleFallback = true
+            }
+            
             checkWifiConnection(context)
         } else {
             phoneNumbers = emptyList()
             carrierNames = emptyList()
             simSlots = emptyList()
             countryCodes = emptyList()
+            simMethodFailed = true
+            showGoogleFallback = true
+            
             if (wifiPermissionGranted) {
                 checkWifiConnection(context)
             }
@@ -156,6 +232,13 @@ fun SimInfoScreen() {
             carrierNames = carriers
             simSlots = slots
             countryCodes = countries
+            
+            // Check if SIM method failed and show Google fallback
+            if (numbers.isEmpty()) {
+                simMethodFailed = true
+                showGoogleFallback = true
+            }
+            
             checkWifiConnection(context)
         } else if (!permissionRequested) {
             permissionRequested = true
@@ -181,7 +264,31 @@ fun SimInfoScreen() {
                 Spacer(modifier = Modifier.height(8.dp))
             }
         } else {
-            Text(text = "No phone number available", style = MaterialTheme.typography.bodySmall)
+            Text(text = "No phone number available from SIM", style = MaterialTheme.typography.bodySmall)
+        }
+        
+        // Google fallback section
+        if (showGoogleFallback) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = "Alternative Method:", style = MaterialTheme.typography.labelMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Get phone number from Google account", style = MaterialTheme.typography.bodySmall)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            if (googlePhoneNumber.isNotEmpty()) {
+                Text(text = "Google: $googlePhoneNumber", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            } else {
+                Button(
+                    onClick = { 
+                        onRequestGooglePhoneNumber { number ->
+                            googlePhoneNumber = number
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Get Phone Number from Google")
+                }
+            }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
