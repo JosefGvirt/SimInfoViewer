@@ -242,15 +242,23 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
         
         Text(text = "Phone Number(s):", style = MaterialTheme.typography.labelMedium)
         Spacer(modifier = Modifier.height(8.dp))
-        if (phoneNumbers.isNotEmpty()) {
-            phoneNumbers.forEachIndexed { idx, number ->
-                Text(text = "SIM Slot ${simSlots.getOrNull(idx) ?: "?"}: $number", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Carrier: ${carrierNames.getOrNull(idx) ?: "Unknown"}", style = MaterialTheme.typography.bodySmall)
-                Text(text = "Country: ${countryCodes.getOrNull(idx) ?: "Unknown"}", style = MaterialTheme.typography.bodySmall)
+        if (simSlots.isNotEmpty()) {
+            simSlots.forEachIndexed { idx, slot ->
+                Text(text = "SIM Slot $slot:", style = MaterialTheme.typography.bodyMedium)
+                val number = phoneNumbers.getOrNull(idx)
+                val carrier = carrierNames.getOrNull(idx) ?: "Unknown"
+                val country = countryCodes.getOrNull(idx) ?: "Unknown"
+                if (!number.isNullOrBlank()) {
+                    Text(text = "Phone Number: $number", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    Text(text = "Phone Number: Not available", style = MaterialTheme.typography.bodySmall)
+                }
+                Text(text = "Carrier: $carrier", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Country: $country", style = MaterialTheme.typography.bodySmall)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         } else {
-            Text(text = "No phone number available from SIM", style = MaterialTheme.typography.bodySmall)
+            Text(text = "No SIM info available", style = MaterialTheme.typography.bodySmall)
         }
         
         // Google fallback section
