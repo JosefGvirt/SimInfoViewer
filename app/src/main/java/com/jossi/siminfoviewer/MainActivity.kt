@@ -400,9 +400,15 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
                     color = Color(0xFF1976D2) // Blue
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                // Stack avatar call buttons vertically
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     AvatarCallButton(name = "Martha", number = "+972546763889", context = context)
+                    Spacer(modifier = Modifier.height(8.dp))
                     AvatarCallButton(name = "Lamis", number = "+972546763889", context = context)
+                    Spacer(modifier = Modifier.height(8.dp))
                     AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
                 }
             }
