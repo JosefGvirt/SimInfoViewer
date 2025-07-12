@@ -29,6 +29,7 @@ import com.google.android.gms.auth.api.credentials.Credentials
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.*
+import androidx.compose.ui.text.font.FontWeight
 
 class MainActivity : ComponentActivity() {
     private var phoneNumberCallback: ((String) -> Unit)? = null
@@ -298,7 +299,7 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
         
         if (isConnectedToADU) {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "⚠️ Connected to ADU network", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            Text(text = "⚠️ Connected to ADU network", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = { openWifiSettings() },
@@ -317,7 +318,7 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "⚠️ Connected to external cellular network: ${nonPelephoneCarriers.joinToString(", ")}",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.error
             )
             Spacer(modifier = Modifier.height(8.dp))
