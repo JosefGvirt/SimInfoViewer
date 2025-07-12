@@ -32,6 +32,23 @@ android {
         disable.add("AutoboxingStateCreation")
         disable.add("MutableCollectionMutableState")
     }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore.jks")
+            storePassword = "siminfoviewer"
+            keyAlias = "siminfoviewer"
+            keyPassword = "siminfoviewer"
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
 }
 
 dependencies {
