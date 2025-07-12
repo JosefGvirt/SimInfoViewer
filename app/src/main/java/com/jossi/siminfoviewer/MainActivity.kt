@@ -30,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 
 class MainActivity : ComponentActivity() {
     private var phoneNumberCallback: ((String) -> Unit)? = null
@@ -283,6 +285,13 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
                 ) {
                     Text("Get Phone Number from Google")
                 }
+                // Extra buttons for Martha, Lamis, Anna
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    AvatarCallButton(name = "Martha", number = "+972546763889", context = context)
+                    AvatarCallButton(name = "Lamis", number = "+972546763889", context = context)
+                    AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
+                }
             }
         }
         
@@ -393,3 +402,24 @@ fun AnimatedFooter() {
 }
 
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+
+@Composable
+fun AvatarCallButton(name: String, number: String, context: android.content.Context) {
+    Button(
+        onClick = {
+            val intent = Intent(Intent.ACTION_DIAL)
+            intent.data = android.net.Uri.parse("tel:$number")
+            context.startActivity(intent)
+        },
+        modifier = Modifier.padding(horizontal = 4.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF90CAF9)) // Light blue
+    ) {
+        Icon(
+            imageVector = Icons.Default.Person,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(name)
+    }
+}
