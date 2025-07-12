@@ -381,13 +381,12 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
 @Composable
 fun AvatarCallerPage(onBack: () -> Unit) {
     val context = LocalContext.current
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val scrollState = rememberScrollState()
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(24.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp, 24.dp, 24.dp, 72.dp), // leave space for footer
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
@@ -405,6 +404,7 @@ fun AvatarCallerPage(onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
         }
+        AnimatedFooter(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
