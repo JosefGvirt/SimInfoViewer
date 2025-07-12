@@ -35,6 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 class MainActivity : ComponentActivity() {
     private var phoneNumberCallback: ((String) -> Unit)? = null
@@ -370,32 +373,38 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
     }
 
     if (showAvatarPage) {
-        AvatarCallerPage(onBack = { showAvatarPage = false }, context = context)
+        AvatarCallerPage(onBack = { showAvatarPage = false })
         return
     }
 }
 
 @Composable
-fun AvatarCallerPage(onBack: () -> Unit, context: android.content.Context) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+fun AvatarCallerPage(onBack: () -> Unit) {
+    val context = LocalContext.current
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Call an Avatar", style = MaterialTheme.typography.headlineSmall)
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Call an Avatar", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(32.dp))
+            AvatarCallButton(name = "Martha", number = "+972546763889", context = context)
+            Spacer(modifier = Modifier.height(16.dp))
+            AvatarCallButton(name = "Lamis", number = "+972546763889", context = context)
+            Spacer(modifier = Modifier.height(16.dp))
+            AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
         }
-        Spacer(modifier = Modifier.height(32.dp))
-        AvatarCallButton(name = "Martha", number = "+972546763889", context = context)
-        Spacer(modifier = Modifier.height(16.dp))
-        AvatarCallButton(name = "Lamis", number = "+972546763889", context = context)
-        Spacer(modifier = Modifier.height(16.dp))
-        AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
     }
 }
 
