@@ -400,6 +400,23 @@ fun AvatarCallerPage(onBack: () -> Unit, context: android.content.Context) {
 }
 
 @Composable
+fun AvatarCallButton(name: String, number: String, context: android.content.Context) {
+    Button(
+        onClick = {
+            val intent = Intent(Intent.ACTION_DIAL)
+            intent.data = android.net.Uri.parse("tel:$number")
+            context.startActivity(intent)
+        },
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF90CAF9))
+    ) {
+        Icon(imageVector = Icons.Default.Person, contentDescription = null)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(name)
+    }
+}
+
+@Composable
 fun AnimatedFooter() {
     // Animate RGB color
     val infiniteTransition = rememberInfiniteTransition(label = "footerColor")
