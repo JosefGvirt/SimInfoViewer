@@ -40,6 +40,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.activity.compose.BackHandler
 
 class MainActivity : ComponentActivity() {
     private var phoneNumberCallback: ((String) -> Unit)? = null
@@ -383,10 +385,12 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
 @Composable
 fun AvatarCallerPage(onBack: () -> Unit) {
     val context = LocalContext.current
+    BackHandler { onBack() }
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFEEEEEE)) // Light grey background
+            .navigationBarsPadding() // Add padding for nav bar
     ) {
         val maxHeight = maxHeight
         val maxWidth = maxWidth
