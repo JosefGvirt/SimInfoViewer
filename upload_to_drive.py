@@ -10,6 +10,7 @@ import datetime
 import pickle
 import subprocess
 from pathlib import Path
+import re
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
@@ -51,6 +52,14 @@ def get_latest_commit_message():
         return result.stdout.strip()
     except Exception as e:
         return "No description available."
+
+def extract_tag_from_commit_message(msg):
+    # Use the first line, take up to 6 words, replace spaces with hyphens, lowercase
+    tag = msg.strip().split('\n')[0]
+    tag = '-'.join(tag.lower().split()[:6])
+    # Remove non-alphanumeric/hyphen chars
+    tag = re.sub(r'[^a-z0-9\-]', '', tag)
+    return tag
 
 def get_drive_service():
     """Get authenticated Google Drive service using OAuth"""
@@ -106,9 +115,14 @@ def upload_to_drive():
         # Get version info
         version_code, version_name = get_version_info()
         
-        # Create filename with version, date, and timestamp
+        # Get latest commit message for description and tag
+        description = get_latest_commit_message()
+        tag = extract_tag_from_commit_message(description)
+        if tag:
+            tag = '-' + tag
+        # Create filename with version, date, timestamp, and tag
         now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"SimInfoViewer_v{version_name}_build{version_code}_{now}.apk"
+        filename = f"SimInfoViewer_v{version_name}_build{version_code}_{now}{tag}.apk"
         
         print(f"Uploading {filename} to Google Drive...")
         
@@ -117,8 +131,6 @@ def upload_to_drive():
         if service is None:
             return False
         
-        # Get latest commit message for description
-        description = get_latest_commit_message()
         # Upload file
         file_metadata = {
             "name": filename,
