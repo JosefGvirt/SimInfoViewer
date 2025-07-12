@@ -237,56 +237,160 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
         }
     }
 
-    Column(modifier = Modifier.padding(24.dp)) {
-        Text(text = "SIM Info Viewer", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Android Version: $androidVersion ($androidVersionName)", style = MaterialTheme.typography.bodySmall)
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(text = "Phone Number(s):", style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        if (simSlots.isNotEmpty()) {
-            simSlots.forEachIndexed { idx, slot ->
-                Text(text = "SIM Slot $slot:", style = MaterialTheme.typography.bodyMedium)
-                val number = phoneNumbers.getOrNull(idx)
-                val carrier = carrierNames.getOrNull(idx) ?: "Unknown"
-                val country = countryCodes.getOrNull(idx) ?: "Unknown"
-                if (!number.isNullOrBlank()) {
-                    Text(text = "Phone Number: $number", style = MaterialTheme.typography.bodySmall)
-                } else {
-                    Text(text = "Phone Number: Not available", style = MaterialTheme.typography.bodySmall)
-                }
-                Text(text = "Carrier: $carrier", style = MaterialTheme.typography.bodySmall)
-                Text(text = "Country: $country", style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        } else {
-            Text(text = "No SIM info available", style = MaterialTheme.typography.bodySmall)
-        }
-        
-        // Google fallback section
-        if (showGoogleFallback) {
+    // Replace Column with a scrollable Box and Column
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Top
+        ) {
+            Text(text = "SIM Info Viewer", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Android Version: $androidVersion ($androidVersionName)", style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Alternative Method:", style = MaterialTheme.typography.labelMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Get phone number from Google account", style = MaterialTheme.typography.bodySmall)
-            Spacer(modifier = Modifier.height(8.dp))
             
-            if (googlePhoneNumber.isNotEmpty()) {
-                Text(text = "Google: $googlePhoneNumber", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            Text(text = "Phone Number(s):", style = MaterialTheme.typography.labelMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (simSlots.isNotEmpty()) {
+                simSlots.forEachIndexed { idx, slot ->
+                    Text(text = "SIM Slot $slot:", style = MaterialTheme.typography.bodyMedium)
+                    val number = phoneNumbers.getOrNull(idx)
+                    val carrier = carrierNames.getOrNull(idx) ?: "Unknown"
+                    val country = countryCodes.getOrNull(idx) ?: "Unknown"
+                    if (!number.isNullOrBlank()) {
+                        Text(text = "Phone Number: $number", style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Text(text = "Phone Number: Not available", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text(text = "Carrier: $carrier", style = MaterialTheme.typography.bodySmall)
+                    Text(text = "Country: $country", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             } else {
-                // Restore Google account picker button
+                Text(text = "No SIM info available", style = MaterialTheme.typography.bodySmall)
+            }
+            
+            // Google fallback section
+            if (showGoogleFallback) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "Alternative Method:", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "Get phone number from Google account", style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (googlePhoneNumber.isNotEmpty()) {
+                    Text(text = "Google: $googlePhoneNumber", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                } else {
+                    // Restore Google account picker button
+                    Button(
+                        onClick = { 
+                            onRequestGooglePhoneNumber { number ->
+                                googlePhoneNumber = number
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Get Phone Number from Google")
+                    }
+                    // Prompt and avatar call buttons for Martha, Lamis, Anna
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Try calling one of the avatars to retrieve number",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF1976D2) // Blue
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        AvatarCallButton(name = "Martha", number = "+972546763889", context = context)
+                        AvatarCallButton(name = "Lamis", number = "+972546763889", context = context)
+                        AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = "Device Info:", style = MaterialTheme.typography.labelMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Model: $deviceModel", style = MaterialTheme.typography.bodySmall)
+            Text(text = "Manufacturer: $deviceManufacturer", style = MaterialTheme.typography.bodySmall)
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = "WiFi Network:", style = MaterialTheme.typography.labelMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Current: $currentWifiSSID", style = MaterialTheme.typography.bodySmall)
+            
+            if (isConnectedToADU) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "⚠️ Connected to ADU network", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { openWifiSettings() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)) // Orange
+                ) {
+                    Text("Open WiFi Settings to Forget ADU")
+                }
+            } else if (currentWifiSSID != "Not connected" && currentWifiSSID != "Error: " && currentWifiSSID.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "✅ Not connected to ADU", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            }
+
+            // Cellular network alert logic
+            val nonPelephoneCarriers = carrierNames.filter { it.isNotBlank() && !it.equals("Pelephone", ignoreCase = true) }
+            if (nonPelephoneCarriers.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "⚠️ Connected to external cellular network: ${nonPelephoneCarriers.joinToString(", ")}",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        // Open cellular data settings
+                        val intent = Intent(Settings.ACTION_DATA_ROAMING_SETTINGS)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)) // Orange
+                ) {
+                    Text("Open Cellular Settings to Disconnect Data")
+                }
+            } else if (carrierNames.any { it.equals("Pelephone", ignoreCase = true) }) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "✅ Not connected to external network",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            if (!wifiPermissionGranted) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "Location permission needed to check WiFi", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        // Avatar suggestion and buttons at the bottom
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 64.dp) // leave space for animated footer
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (phoneNumbers.isEmpty() && googlePhoneNumber.isEmpty()) {
                 Button(
                     onClick = { 
                         onRequestGooglePhoneNumber { number ->
                             googlePhoneNumber = number
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
                 ) {
                     Text("Get Phone Number from Google")
                 }
-                // Prompt and avatar call buttons for Martha, Lamis, Anna
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Try calling one of the avatars to retrieve number",
@@ -300,72 +404,8 @@ fun SimInfoScreen(onRequestGooglePhoneNumber: ((String) -> Unit) -> Unit) {
                     AvatarCallButton(name = "Anna", number = "+972546763889", context = context)
                 }
             }
+            AnimatedFooter()
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Device Info:", style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Model: $deviceModel", style = MaterialTheme.typography.bodySmall)
-        Text(text = "Manufacturer: $deviceManufacturer", style = MaterialTheme.typography.bodySmall)
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "WiFi Network:", style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Current: $currentWifiSSID", style = MaterialTheme.typography.bodySmall)
-        
-        if (isConnectedToADU) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "⚠️ Connected to ADU network", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { openWifiSettings() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)) // Orange
-            ) {
-                Text("Open WiFi Settings to Forget ADU")
-            }
-        } else if (currentWifiSSID != "Not connected" && currentWifiSSID != "Error: " && currentWifiSSID.isNotBlank()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "✅ Not connected to ADU", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-        }
-
-        // Cellular network alert logic
-        val nonPelephoneCarriers = carrierNames.filter { it.isNotBlank() && !it.equals("Pelephone", ignoreCase = true) }
-        if (nonPelephoneCarriers.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "⚠️ Connected to external cellular network: ${nonPelephoneCarriers.joinToString(", ")}",
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    // Open cellular data settings
-                    val intent = Intent(Settings.ACTION_DATA_ROAMING_SETTINGS)
-                    context.startActivity(intent)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)) // Orange
-            ) {
-                Text("Open Cellular Settings to Disconnect Data")
-            }
-        } else if (carrierNames.any { it.equals("Pelephone", ignoreCase = true) }) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "✅ Not connected to external network",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-        
-        if (!wifiPermissionGranted) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Location permission needed to check WiFi", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        }
-
-        Spacer(modifier = Modifier.weight(1f, fill = true))
-        AnimatedFooter()
     }
 }
 
